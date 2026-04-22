@@ -56,67 +56,54 @@ async function main() {
 
 // --- Camera Setup ---
 async function setupCamera() {
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        statusText.innerText = 'getUserMedia() is not supported by your browser';
-        return;
-    }
-
-    try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-            video: {
-                width: VIDEO_WIDTH,
-                height: VIDEO_HEIGHT,
-                facingMode: { exact: 'environment' } // Strictly require rear camera
-            },
-            audio: true
-        });
-        video.srcObject = stream;
-
-        // Ask for permission to save files
-        hasSavePermission = confirm("Allow this page to save images and videos?");
-        
-        
-        // video.addEventListener('loadeddata', () => {
-        //     // Adjust the container to the video's aspect ratio
-        //     const aspectRatio = video.videoWidth / video.videoHeight;
-        //     container.style.width = `${VIDEO_WIDTH}px`;
-        //     container.style.height = `${VIDEO_HEIGHT}px`;
-        //     canvas.width = video.videoWidth;
-        //     canvas.height = video.videoHeight;
-            
-        //     // // Flip the video element horizontally
-        //     // video.style.transform = 'scaleX(-1)';
-        //     // canvas.style.transform = 'scaleX(-1)';
-            
-        //     // currentState = AppState.IDLE; // Start in IDLE state
-        //     // statusText.innerText = 'Ready to swing!';
-        // });
-        return new Promise((resolve) => {
-            video.onloadedmetadata = () => {
-            // Set canvas dimensions to match the video
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            resolve(video);
-            };
-        });
-    } catch (err) {
-        console.error(err);
-        statusText.innerText = `Error accessing camera: ${err.message}. Trying front camera.`;
-        // Fallback to front camera if rear is not available
+    return new Promise(async (resolve, reject) => {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            statusText.innerText = 'getUserMedia() is not supported by your browser';
+            reject(new Error('getUserMedia() not supported'));
+            return;
+        }
+        // Try rear camera first
         try {
             const stream = await navigator.mediaDevices.getUserMedia({
                 video: {
                     width: VIDEO_WIDTH,
                     height: VIDEO_HEIGHT,
+                    facingMode: { exact: 'environment' }
                 },
                 audio: true
             });
             video.srcObject = stream;
-            // ... (rest of the setup logic for front camera)
-        } catch (frontErr) {
-            statusText.innerText = `Error accessing any camera: ${frontErr.message}`;
+            hasSavePermission = confirm("Allow this page to save images and videos?");
+            video.onloadedmetadata = () => {
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                resolve(video);
+            };
+        } catch (err) {
+            console.error(err);
+            statusText.innerText = `Error accessing camera: ${err.message}. Trying front camera.`;
+            // Try front camera
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        width: VIDEO_WIDTH,
+                        height: VIDEO_HEIGHT,
+                    },
+                    audio: true
+                });
+                video.srcObject = stream;
+                hasSavePermission = confirm("Allow this page to save images and videos?");
+                video.onloadedmetadata = () => {
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    resolve(video);
+                };
+            } catch (frontErr) {
+                statusText.innerText = `Error accessing any camera: ${frontErr.message}`;
+                reject(frontErr);
+            }
         }
-    }
+    });
 }
 
 // --- Real-time Detection Loop ---
