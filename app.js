@@ -52,26 +52,41 @@ async function main() {
 
 // --- Camera Setup ---
 async function setupCamera() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        statusText.innerText = 'getUserMedia() is not supported by your browser';
+        return;
+    }
+
     try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        video.srcObject = stream;
-        await new Promise((resolve) => {
-            video.onloadedmetadata = () => resolve();
+        const stream = await navigator.mediaDevices.getUserMedia({
+            video: {
+                width: VIDEO_WIDTH,
+                height: VIDEO_HEIGHT
+            },
+            audio: true
         });
+        video.srcObject = stream;
 
-        // Check for image/video saving permission right after camera permission
-        const savePermission = confirm('Do you want to allow saving images and videos?');
-        if (!savePermission) {
-            alert('Saving images and videos will be disabled.');
-        } else {
-            alert('Saving images and videos is enabled.');
-        }
+        // Ask for permission to save files
+        hasSavePermission = confirm("Allow this page to save images and videos?");
 
-        return stream;
+        video.addEventListener('loadeddata', () => {
+            // Adjust the container to the video's aspect ratio
+            const aspectRatio = video.videoWidth / video.videoHeight;
+            container.style.width = `${VIDEO_WIDTH}px`;
+            container.style.height = `${VIDEO_HEIGHT}px`;
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            
+            // Flip the video element horizontally
+            video.style.transform = 'scaleX(-1)';
+            
+            currentState = AppState.READY;
+            statusText.innerText = 'Ready to swing!';
+        });
     } catch (err) {
-        console.error('Error accessing the camera:', err);
-        alert('Unable to access the camera. Please check your permissions.');
-        throw err;
+        console.error(err);
+        statusText.innerText = `Error accessing camera: ${err.message}`;
     }
 }
 
