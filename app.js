@@ -38,10 +38,13 @@ async function main() {
         // { modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING } // Use a lightweight model for speed
         { modelType: poseDetection.movenet.modelType.SINGLEPOSE_THUNDER }
     );
+    statusText.innerText = 'PoseNet model loaded. Setting up camera...';
 
     // 2. Set up the camera
+    statusText.innerText = 'Setting up camera...';
     await setupCamera();
-    
+    statusText.innerText = 'Camera is ready!';
+
     // Hide the loading text and show the video container
     authorText.style.display = 'none';
     loadingText.style.display = 'none';
