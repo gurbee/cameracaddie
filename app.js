@@ -80,9 +80,9 @@ async function setupCamera() {
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
             
-            // Flip the video element horizontally
-            video.style.transform = 'scaleX(-1)';
-            canvas.style.transform = 'scaleX(-1)';
+            // // Flip the video element horizontally
+            // video.style.transform = 'scaleX(-1)';
+            // canvas.style.transform = 'scaleX(-1)';
             
             currentState = AppState.IDLE; // Start in IDLE state
             statusText.innerText = 'Ready to swing!';
