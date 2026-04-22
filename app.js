@@ -71,21 +71,30 @@ async function setupCamera() {
 
         // Ask for permission to save files
         hasSavePermission = confirm("Allow this page to save images and videos?");
-
-        video.addEventListener('loadeddata', () => {
-            // Adjust the container to the video's aspect ratio
-            const aspectRatio = video.videoWidth / video.videoHeight;
-            container.style.width = `${VIDEO_WIDTH}px`;
-            container.style.height = `${VIDEO_HEIGHT}px`;
+        
+        
+        // video.addEventListener('loadeddata', () => {
+        //     // Adjust the container to the video's aspect ratio
+        //     const aspectRatio = video.videoWidth / video.videoHeight;
+        //     container.style.width = `${VIDEO_WIDTH}px`;
+        //     container.style.height = `${VIDEO_HEIGHT}px`;
+        //     canvas.width = video.videoWidth;
+        //     canvas.height = video.videoHeight;
+            
+        //     // // Flip the video element horizontally
+        //     // video.style.transform = 'scaleX(-1)';
+        //     // canvas.style.transform = 'scaleX(-1)';
+            
+        //     // currentState = AppState.IDLE; // Start in IDLE state
+        //     // statusText.innerText = 'Ready to swing!';
+        // });
+        return new Promise((resolve) => {
+            video.onloadedmetadata = () => {
+            // Set canvas dimensions to match the video
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
-            
-            // // Flip the video element horizontally
-            // video.style.transform = 'scaleX(-1)';
-            // canvas.style.transform = 'scaleX(-1)';
-            
-            // currentState = AppState.IDLE; // Start in IDLE state
-            // statusText.innerText = 'Ready to swing!';
+            resolve(video);
+            };
         });
     } catch (err) {
         console.error(err);
