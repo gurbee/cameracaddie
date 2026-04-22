@@ -22,13 +22,11 @@ body {
 }
 
 #webcam {
-    /* Ensure no horizontal flip */
-    transform: scaleX(1);
+    transform: scaleX(-1);
 }
 
 #output {
-    /* Keep the canvas normal so drawings aren't flipped */
-    transform: scaleX(1);
+    transform: scaleX(-1);
 }
 
 #status {
