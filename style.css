@@ -42,3 +42,16 @@ body {
     font-size: 1em;
     cursor: pointer;
 }
+
+#subtitle {
+    text-align: center;
+    margin-top: -10px;
+    margin-bottom: 10px;
+    color: #555;
+}
+
+#additional-text {
+    text-align: center;
+    margin-top: -10px;
+    color: #777;
+}
