@@ -52,29 +52,27 @@ async function main() {
 
 // --- Camera Setup ---
 async function setupCamera() {
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        throw new Error('Browser API navigator.mediaDevices.getUserMedia not available');
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        video.srcObject = stream;
+        await new Promise((resolve) => {
+            video.onloadedmetadata = () => resolve();
+        });
+
+        // Check for image/video saving permission right after camera permission
+        const savePermission = confirm('Do you want to allow saving images and videos?');
+        if (!savePermission) {
+            alert('Saving images and videos will be disabled.');
+        } else {
+            alert('Saving images and videos is enabled.');
+        }
+
+        return stream;
+    } catch (err) {
+        console.error('Error accessing the camera:', err);
+        alert('Unable to access the camera. Please check your permissions.');
+        throw err;
     }
-
-    const stream = await navigator.mediaDevices.getUserMedia({
-        'audio': false, // No audio needed for pose detection
-        'video': {
-            facingMode: 'environment', // Prefer the rear camera
-            width: VIDEO_WIDTH,
-            height: VIDEO_HEIGHT,
-        },
-    });
-
-    video.srcObject = stream;
-
-    return new Promise((resolve) => {
-        video.onloadedmetadata = () => {
-            // Set canvas dimensions to match the video
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            resolve(video);
-        };
-    });
 }
 
 // --- Real-time Detection Loop ---
@@ -193,31 +191,16 @@ function startRecording() {
     };
     mediaRecorder.onstop = function() {
         lastRecordedBlob = new Blob(recordedChunks, { type: 'video/mp4' });
-        // Ask for permission to save the image
-        if (confirm('Do you want to save the image?')) {
-            const canvasImage = canvas.toDataURL('image/png');
-            const imgLink = document.createElement('a');
-            imgLink.style.display = 'none';
-            imgLink.href = canvasImage;
-            imgLink.download = 'strike_image.png';
-            document.body.appendChild(imgLink);
-            imgLink.click();
-            setTimeout(() => {
-                document.body.removeChild(imgLink);
-            }, 100);
-        }
 
-        // Automatically save the video
-        const url = URL.createObjectURL(lastRecordedBlob);
-        const a = document.createElement('a');
-        a.style.display = 'none';
-        a.href = url;
-        a.download = 'strike_video.mp4';
-        document.body.appendChild(a);
-        a.click();
+        // Save video automatically when strike is detected
+        const videoLink = document.createElement('a');
+        videoLink.style.display = 'none';
+        videoLink.href = URL.createObjectURL(lastRecordedBlob);
+        videoLink.download = 'strike_video.mp4';
+        document.body.appendChild(videoLink);
+        videoLink.click();
         setTimeout(() => {
-            document.body.removeChild(a);
-            window.URL.revokeObjectURL(url);
+            document.body.removeChild(videoLink);
         }, 100);
     };
     mediaRecorder.start();
