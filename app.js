@@ -187,18 +187,32 @@ function startRecording() {
     if (mediaRecorder && mediaRecorder.state === 'recording') return;
     recordedChunks = [];
     const stream = video.srcObject;
-    mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+    mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/mp4' });
     mediaRecorder.ondataavailable = function(e) {
         if (e.data.size > 0) recordedChunks.push(e.data);
     };
     mediaRecorder.onstop = function() {
-        lastRecordedBlob = new Blob(recordedChunks, { type: 'video/webm' });
-        // Optionally, trigger download automatically
+        lastRecordedBlob = new Blob(recordedChunks, { type: 'video/mp4' });
+        // Ask for permission to save the image
+        if (confirm('Do you want to save the image?')) {
+            const canvasImage = canvas.toDataURL('image/png');
+            const imgLink = document.createElement('a');
+            imgLink.style.display = 'none';
+            imgLink.href = canvasImage;
+            imgLink.download = 'strike_image.png';
+            document.body.appendChild(imgLink);
+            imgLink.click();
+            setTimeout(() => {
+                document.body.removeChild(imgLink);
+            }, 100);
+        }
+
+        // Automatically save the video
         const url = URL.createObjectURL(lastRecordedBlob);
         const a = document.createElement('a');
         a.style.display = 'none';
         a.href = url;
-        a.download = 'strike_video.webm';
+        a.download = 'strike_video.mp4';
         document.body.appendChild(a);
         a.click();
         setTimeout(() => {
