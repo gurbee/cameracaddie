@@ -43,7 +43,7 @@ async function main() {
     // 2. Set up the camera
     statusText.innerText = 'Setting up camera...';
     await setupCamera();
-    statusText.innerText = 'Camera is ready!';
+    // statusText.innerText = 'Camera is ready!';
 
     // Hide the loading text and show the video container
     // authorText.style.display = 'none';
