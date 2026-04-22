@@ -37,17 +37,12 @@ async function main() {
         // { modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING } // Use a lightweight model for speed
         { modelType: poseDetection.movenet.modelType.SINGLEPOSE_THUNDER }
     );
-    // statusText.innerText = 'PoseNet model loaded. Setting up camera...';
-
     // 2. Set up the camera
-    // statusText.innerText = 'Setting up camera...';
     await setupCamera();
-    // statusText.innerText = 'Camera is ready!';
-    // statusText.innerText = '';
     // Hide the loading text and show the video container
-    // authorText.style.display = 'none';
-    // loadingText.style.display = 'none';
     container.style.display = 'block';
+    // Clear status text so detection messages can show
+    statusText.innerText = '';
 
     // 3. Start the real-time detection loop
     detectPoseInRealTime();
@@ -236,6 +231,8 @@ function startRecording() {
             document.body.removeChild(videoLink);
         }, 100);
         statusText.innerText = 'Video saved! Ready to swing again.';
+        // Restart detection loop after saving
+        requestAnimationFrame(detectPoseInRealTime);
     };
     mediaRecorder.start();
 }
