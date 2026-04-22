@@ -31,20 +31,19 @@ let currentState = AppState.IDLE;
 // --- Main Setup Function ---
 async function main() {
     // 1. Load the MoveNet model
-    // statusText.innerText = 'Presented by Gurbee';
     statusText.innerText = 'Loading PoseNet model...';
     detector = await poseDetection.createDetector(
         poseDetection.SupportedModels.MoveNet, 
         // { modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING } // Use a lightweight model for speed
         { modelType: poseDetection.movenet.modelType.SINGLEPOSE_THUNDER }
     );
-    statusText.innerText = 'PoseNet model loaded. Setting up camera...';
+    // statusText.innerText = 'PoseNet model loaded. Setting up camera...';
 
     // 2. Set up the camera
-    statusText.innerText = 'Setting up camera...';
+    // statusText.innerText = 'Setting up camera...';
     await setupCamera();
     // statusText.innerText = 'Camera is ready!';
-    statusText.innerText = '';
+    // statusText.innerText = '';
     // Hide the loading text and show the video container
     // authorText.style.display = 'none';
     // loadingText.style.display = 'none';
