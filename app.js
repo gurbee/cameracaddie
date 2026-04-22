@@ -3,6 +3,7 @@ const video = document.getElementById('webcam');
 const canvas = document.getElementById('output');
 const ctx = canvas.getContext('2d');
 const statusText = document.getElementById('status');
+const authorText = document.getElementById('author');
 const loadingText = document.getElementById('loading');
 const container = document.getElementById('container');
 const downloadBtn = document.getElementById('download-btn');
@@ -29,7 +30,7 @@ let currentState = AppState.IDLE;
 // --- Main Setup Function ---
 async function main() {
     // 1. Load the MoveNet model
-    statusText.innerText = 'Presented by Gurbee';
+    // statusText.innerText = 'Presented by Gurbee';
     statusText.innerText = 'Loading PoseNet model...';
     detector = await poseDetection.createDetector(
         poseDetection.SupportedModels.MoveNet, 
@@ -41,6 +42,7 @@ async function main() {
     await setupCamera();
     
     // Hide the loading text and show the video container
+    authorText.style.display = 'none';
     loadingText.style.display = 'none';
     container.style.display = 'block';
 
