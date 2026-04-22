@@ -46,8 +46,8 @@ async function main() {
     statusText.innerText = 'Camera is ready!';
 
     // Hide the loading text and show the video container
-    authorText.style.display = 'none';
-    loadingText.style.display = 'none';
+    // authorText.style.display = 'none';
+    // loadingText.style.display = 'none';
     container.style.display = 'block';
 
     // 3. Start the real-time detection loop
