@@ -22,11 +22,11 @@ body {
 }
 
 #webcam {
-    transform: scaleX(-1);
+    /* transform: scaleX(-1); */
 }
 
 #output {
-    transform: scaleX(-1);
+    transform: scaleX(1);
 }
 
 #status {
