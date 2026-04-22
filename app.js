@@ -29,6 +29,7 @@ let currentState = AppState.IDLE;
 // --- Main Setup Function ---
 async function main() {
     // 1. Load the MoveNet model
+    statusText.innerText = 'Presented by Gurbee';
     statusText.innerText = 'Loading PoseNet model...';
     detector = await poseDetection.createDetector(
         poseDetection.SupportedModels.MoveNet, 
@@ -82,23 +83,135 @@ async function detectPoseInRealTime() {
     // Clear the previous drawing
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // --- Core Logic from Flowchart ---
+    // --- Advanced Core Logic ---
     if (poses && poses.length > 0) {
         const keypoints = poses[0].keypoints;
-        
-        // This is where we will implement the logic from your flowchart
-        // isReady(keypoints); 
-        // isStriking(keypoints);
-
-        // For now, let's just draw the skeleton to show it's working
         drawSkeleton(keypoints);
+
+        // --- Advanced pose history tracking ---
+        if (!window.poseHistory) window.poseHistory = [];
+        const history = window.poseHistory;
+        const now = Date.now();
+        // Extract key y/x for wrists, shoulders, hips
+        function get(name) {
+            return keypoints.find(k => k.name === name || k.part === name);
+        }
+        const leftWrist = get('left_wrist');
+        const rightWrist = get('right_wrist');
+        const leftShoulder = get('left_shoulder');
+        const rightShoulder = get('right_shoulder');
+        const leftHip = get('left_hip');
+        const rightHip = get('right_hip');
+        history.push({
+            t: now,
+            leftWristY: leftWrist?.y,
+            rightWristY: rightWrist?.y,
+            leftShoulderY: leftShoulder?.y,
+            rightShoulderY: rightShoulder?.y,
+            leftHipX: leftHip?.x,
+            rightHipX: rightHip?.x
+        });
+        // Keep only last 2s
+        while (history.length > 0 && now - history[0].t > 2000) history.shift();
+
+        // Advanced ready pose: hands/arms below shoulders, and still
+        function isReadyPose() {
+            if (!leftWrist || !rightWrist || !leftShoulder || !rightShoulder) return false;
+            // Both hands below both shoulders
+            const handsBelowShoulders = leftWrist.y > leftShoulder.y && rightWrist.y > rightShoulder.y;
+            // Stillness: wrists move < 10px in last 0.5s
+            const t0 = now - 500;
+            const recent = history.filter(h => h.t >= t0);
+            if (recent.length < 2) return false;
+            const maxMove = Math.max(
+                ...['leftWristY', 'rightWristY'].map(k => {
+                    const vals = recent.map(h => h[k]).filter(v => v != null);
+                    return vals.length > 1 ? Math.max(...vals) - Math.min(...vals) : 0;
+                })
+            );
+            const still = maxMove < 10;
+            return handsBelowShoulders && still;
+        }
+
+        // Advanced striking pose: hands move above->below shoulders within 1s, with hip rotation
+        function isStrikingPose() {
+            if (!leftWrist || !rightWrist || !leftShoulder || !rightShoulder) return false;
+            const t0 = now - 1000;
+            const recent = history.filter(h => h.t >= t0);
+            if (recent.length < 2) return false;
+            // Sequence: above -> below
+            let state = 0;
+            for (let h of recent) {
+                const handsAbove = h.leftWristY < h.leftShoulderY && h.rightWristY < h.rightShoulderY;
+                const handsBelow = h.leftWristY > h.leftShoulderY && h.rightWristY > h.rightShoulderY;
+                if (state === 0 && handsAbove) state = 1;
+                else if (state === 1 && handsBelow) { state = 2; break; }
+            }
+            if (state < 2) return false;
+            // Hip rotation: check if hips moved horizontally > 30px in last 1s
+            const hipMove = Math.max(
+                ...['leftHipX', 'rightHipX'].map(k => {
+                    const vals = recent.map(h => h[k]).filter(v => v != null);
+                    return vals.length > 1 ? Math.max(...vals) - Math.min(...vals) : 0;
+                })
+            );
+            return hipMove > 30;
+        }
+
+        // --- State Machine ---
+        if (currentState === AppState.IDLE && isReadyPose()) {
+            currentState = AppState.READY;
+            statusText.innerText = 'Ready pose detected. Waiting for strike...';
+            startRecording();
+        } else if (currentState === AppState.READY && isStrikingPose()) {
+            currentState = AppState.SWINGING;
+            statusText.innerText = 'Strike detected! Saving video...';
+            stopRecordingAndSave();
+        }
     } else {
-        currentState = AppState.IDLE;
-        statusText.innerText = 'No person detected.';
+        if (currentState !== AppState.IDLE) {
+            currentState = AppState.IDLE;
+            statusText.innerText = 'No person detected.';
+        }
     }
 
     // Loop forever
     requestAnimationFrame(detectPoseInRealTime);
+// --- Pose Detection Helpers ---
+
+
+// --- Video Recording Functions ---
+function startRecording() {
+    if (mediaRecorder && mediaRecorder.state === 'recording') return;
+    recordedChunks = [];
+    const stream = video.srcObject;
+    mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+    mediaRecorder.ondataavailable = function(e) {
+        if (e.data.size > 0) recordedChunks.push(e.data);
+    };
+    mediaRecorder.onstop = function() {
+        lastRecordedBlob = new Blob(recordedChunks, { type: 'video/webm' });
+        // Optionally, trigger download automatically
+        const url = URL.createObjectURL(lastRecordedBlob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = 'strike_video.webm';
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }, 100);
+    };
+    mediaRecorder.start();
+}
+
+function stopRecordingAndSave() {
+    if (mediaRecorder && mediaRecorder.state === 'recording') {
+        mediaRecorder.stop();
+    }
+}
 }
 
 // --- Drawing Functions for Visualization ---
