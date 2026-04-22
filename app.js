@@ -173,7 +173,7 @@ async function detectPoseInRealTime() {
     } else {
         if (currentState !== AppState.IDLE) {
             currentState = AppState.IDLE;
-            statusText.innerText = 'No person detected.';
+            statusText.innerText = 'No person detected fff.';
         }
     }
 
