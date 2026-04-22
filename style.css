@@ -22,8 +22,7 @@ body {
 }
 
 #webcam {
-    /* Flip the video horizontally for a mirror effect */
-    transform: scaleX(-1); 
+    /* No horizontal flip */
 }
 
 #output {
