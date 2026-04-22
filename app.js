@@ -32,7 +32,8 @@ async function main() {
     statusText.innerText = 'Loading PoseNet model...';
     detector = await poseDetection.createDetector(
         poseDetection.SupportedModels.MoveNet, 
-        { modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING } // Use a lightweight model for speed
+        // { modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING } // Use a lightweight model for speed
+        { modelType: poseDetection.movenet.modelType.SINGLEPOSE_THUNDER }
     );
 
     // 2. Set up the camera
