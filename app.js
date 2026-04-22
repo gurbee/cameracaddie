@@ -84,8 +84,8 @@ async function setupCamera() {
             // video.style.transform = 'scaleX(-1)';
             // canvas.style.transform = 'scaleX(-1)';
             
-            currentState = AppState.IDLE; // Start in IDLE state
-            statusText.innerText = 'Ready to swing!';
+            // currentState = AppState.IDLE; // Start in IDLE state
+            // statusText.innerText = 'Ready to swing!';
         });
     } catch (err) {
         console.error(err);
@@ -120,7 +120,7 @@ async function detectPoseInRealTime() {
     if (poses && poses.length > 0) {
         noPoseStart = null; // Reset timer if pose is detected
         const keypoints = poses[0].keypoints;
-        drawSkeleton(keypoints);
+        drawSkeleton(keypoints); // draw pose show that it's working
 
         // --- Advanced pose history tracking ---
         if (!window.poseHistory) window.poseHistory = [];
