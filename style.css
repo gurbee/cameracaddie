@@ -1,0 +1,46 @@
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: #f0f0f0;
+}
+
+#container {
+    position: relative;
+    width: 640px;
+    height: 480px;
+    border: 2px solid #333;
+}
+
+#webcam, #output {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+#webcam {
+    /* Flip the video horizontally for a mirror effect */
+    transform: scaleX(-1); 
+}
+
+#output {
+    /* Keep the canvas normal so drawings aren't flipped */
+    transform: scaleX(1);
+}
+
+#status {
+    margin-top: 10px;
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #d9534f;
+}
+
+#download-btn {
+    margin-top: 10px;
+    padding: 10px 15px;
+    font-size: 1em;
+    cursor: pointer;
+}

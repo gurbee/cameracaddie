@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Golf Swing Detector</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>Camera Caddie</h1>
+    <div id="loading">Loading model and camera...</div>
+    <div id="container" style="display: none;">
+        <video id="webcam" autoplay playsinline muted></video>
+        <canvas id="output"></canvas>
+    </div>
+    <div id="status"></div>
+    <button id="download-btn" style="display: none;">Download Last Swing</button>
+
+    <!-- Load TensorFlow.js and the MoveNet model -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.11.0/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/pose-detection@2.0.0/dist/pose-detection.min.js"></script>
+    
+    <!-- Load your application logic -->
+    <script src="app.js"></script>
+</body>
+</html>
