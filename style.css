@@ -23,7 +23,7 @@ body {
 
 #webcam {
     /* Ensure no horizontal flip */
-    /* transform: scaleX(1); */
+    transform: scaleX(1);
 }
 
 #output {
