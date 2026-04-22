@@ -14,6 +14,7 @@ let poses;
 let mediaRecorder;
 let recordedChunks = [];
 let lastRecordedBlob = null;
+let noPoseStart = null; // Timer for stopping recording
 
 const VIDEO_WIDTH = 640;
 const VIDEO_HEIGHT = 480;
@@ -62,7 +63,7 @@ async function setupCamera() {
             video: {
                 width: VIDEO_WIDTH,
                 height: VIDEO_HEIGHT,
-                facingMode: 'environment' // rear camera if available
+                facingMode: { exact: 'environment' } // Strictly require rear camera
             },
             audio: true
         });
@@ -82,12 +83,26 @@ async function setupCamera() {
             // Flip the video element horizontally
             video.style.transform = 'scaleX(-1)';
             
-            currentState = AppState.READY;
+            currentState = AppState.IDLE; // Start in IDLE state
             statusText.innerText = 'Ready to swing!';
         });
     } catch (err) {
         console.error(err);
-        statusText.innerText = `Error accessing camera: ${err.message}`;
+        statusText.innerText = `Error accessing camera: ${err.message}. Trying front camera.`;
+        // Fallback to front camera if rear is not available
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: {
+                    width: VIDEO_WIDTH,
+                    height: VIDEO_HEIGHT,
+                },
+                audio: true
+            });
+            video.srcObject = stream;
+            // ... (rest of the setup logic for front camera)
+        } catch (frontErr) {
+            statusText.innerText = `Error accessing any camera: ${frontErr.message}`;
+        }
     }
 }
 
@@ -98,16 +113,18 @@ async function detectPoseInRealTime() {
 
     // Clear the previous drawing
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const now = Date.now();
 
     // --- Advanced Core Logic ---
     if (poses && poses.length > 0) {
+        noPoseStart = null; // Reset timer if pose is detected
         const keypoints = poses[0].keypoints;
         drawSkeleton(keypoints);
 
         // --- Advanced pose history tracking ---
         if (!window.poseHistory) window.poseHistory = [];
         const history = window.poseHistory;
-        const now = Date.now();
+        
         // Extract key y/x for wrists, shoulders, hips
         function get(name) {
             return keypoints.find(k => k.name === name || k.part === name);
@@ -149,29 +166,21 @@ async function detectPoseInRealTime() {
             return handsBelowShoulders && still;
         }
 
-        // Advanced striking pose: hands move above->below shoulders within 1s, with hip rotation
-        function isStrikingPose() {
+        // End pose of the swing
+        function isEndPose() {
             if (!leftWrist || !rightWrist || !leftShoulder || !rightShoulder) return false;
+            const handsAboveShoulders = leftWrist.y < leftShoulder.y && rightWrist.y < rightShoulder.y;
+            // Check for recent hip rotation
             const t0 = now - 1000;
             const recent = history.filter(h => h.t >= t0);
             if (recent.length < 2) return false;
-            // Sequence: above -> below
-            let state = 0;
-            for (let h of recent) {
-                const handsAbove = h.leftWristY < h.leftShoulderY && h.rightWristY < h.rightShoulderY;
-                const handsBelow = h.leftWristY > h.leftShoulderY && h.rightWristY > h.rightShoulderY;
-                if (state === 0 && handsAbove) state = 1;
-                else if (state === 1 && handsBelow) { state = 2; break; }
-            }
-            if (state < 2) return false;
-            // Hip rotation: check if hips moved horizontally > 30px in last 1s
             const hipMove = Math.max(
                 ...['leftHipX', 'rightHipX'].map(k => {
                     const vals = recent.map(h => h[k]).filter(v => v != null);
                     return vals.length > 1 ? Math.max(...vals) - Math.min(...vals) : 0;
                 })
             );
-            return hipMove > 30;
+            return handsAboveShoulders && hipMove > 30;
         }
 
         // --- State Machine ---
@@ -179,15 +188,24 @@ async function detectPoseInRealTime() {
             currentState = AppState.READY;
             statusText.innerText = 'Ready pose detected. Waiting for strike...';
             startRecording();
-        } else if (currentState === AppState.READY && isStrikingPose()) {
+        } else if (currentState === AppState.READY && isEndPose()) {
             currentState = AppState.SWINGING;
-            statusText.innerText = 'Strike detected! Saving video...';
-            stopRecordingAndSave();
+            statusText.innerText = 'Swing finished! Recording...';
         }
     } else {
-        if (currentState !== AppState.IDLE) {
+        // No person detected
+        if (currentState === AppState.SWINGING) {
+            if (noPoseStart === null) {
+                noPoseStart = now;
+            } else if (now - noPoseStart > 5000) {
+                statusText.innerText = 'Stopping recording...';
+                stopRecordingAndSave();
+                currentState = AppState.IDLE;
+                noPoseStart = null;
+            }
+        } else if (currentState !== AppState.IDLE) {
             currentState = AppState.IDLE;
-            statusText.innerText = 'No person detected fff.';
+            statusText.innerText = 'No person detected.';
         }
     }
 
@@ -218,6 +236,7 @@ function startRecording() {
         setTimeout(() => {
             document.body.removeChild(videoLink);
         }, 100);
+        statusText.innerText = 'Video saved! Ready to swing again.';
     };
     mediaRecorder.start();
 }
